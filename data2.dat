@@ -1,0 +1,17 @@
+{"action":"create","object":"Teacher","data":{"subjeect":"Math","salary":2345,"classroom":["CL-001","CL-002","CL-005"],"person":{"name":"Ivan","surname":"Popov","personalCode":"123422-43235"}}}
+{"action":"create","object":"Teacher","data":{"subjeect":"Chemestry","salary":1234,"classroom":["CL-021","CL-202","CL-045","lab"],"person":{"name":"Vasja","surname":"Pupkin","personalCode":"SuperStar"}}}
+{"action":"create","object":"Teacher","data":{"subjeect":"idk","salary":1234,"classroom":[],"person":{"name":"Forgot","surname":"Unknown","personalCode":"Lost"}}}
+{"action":"read","object":"Teacher","data":{"id":7}}
+{"action":"read","object":"Teacher","data":{"id":3}}
+{"action":"update","object":"Teacher","data":{"id":3,"subjeect":"oh yeah maaaaath","salary":1234,"classroom":["1", "2", "and 3"],"person":{"surname":"Kisliy","personalCode":"654635464767547"}}}
+{"action":"read","object":"Teacher","data":{"id":3}}
+{"action":"delete","object":"Teacher","data":{"id":3}}
+{"action":"read","object":"Teacher","data":{"id":3}}
+{"action":"create","object":"Student","data":{"year":9,"index":"c","person":{"name":"Andrey","surname":"Pirozenok","personalCode":"4353256375347"}}}
+{"action":"read","object":"Student","data":{"id":4}}
+{"action":"create","object":"Staff","data":{"salary":1,"classroom":["all", "of", "them"],"person":{"name":"Ian","surname":"Sian","personalCode":"22263723447"}}}
+{"action":"read","object":"Staff","data":{"id":5}}
+{"action":"update","object":"Staff","data":{"id":5,"salary":99999999,"classroom":["all", "of", "them", "except", "one"],"person":{"name":"Ian","surname":"Sian","personalCode":"22263723447"}}}
+{"action":"read","object":"Staff","data":{"id":5}}
+{"action":"delete","object":"Staff","data":{"id":5}}
+{"action":"read","object":"Staff","data":{"id":5}}
