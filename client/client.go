@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+type TID struct {
+	id float64 `json:"ID"`
+}
+
 // Teacher contains all information about teacher
 type Teacher struct {
 	Salary    float64  `json:"salary"`
@@ -95,8 +99,6 @@ func main() {
 	// defer conn.Close() // no need for this
 
 	// Create json request
-	msg := []byte("{\"action\":\"create\",\"object\":\"Teacher\",\"data\":{\"subjeect\":\"Math\",\"salary\":2345,\"classroom\":[\"CL-001\",\"CL-002\",\"CL-005\"],\"person\":{\"name\":\"Ivan\",\"surname\":\"Popov\",\"personalCode\":\"123422-43235\"}}}")
-
 	for {
 		var inp string
 		var msg []byte
@@ -104,9 +106,15 @@ func main() {
 		fmt.Scan(&inp)
 		switch inp {
 		case "select":
+			var ID float64
+			fmt.Print("ID: ")
+			fmt.Scan(&ID)
+			HandleSelected(ID, conn)
+			continue
 		case "create":
 			msg = GetJsonCreate()
 		case "exit":
+			conn.Write([]byte("stop"))
 			fmt.Println("Exiting...")
 			conn.Close()
 			os.Exit(0)
@@ -114,6 +122,7 @@ func main() {
 		// Send msg
 		conn.Write(msg)
 
+		// Recieve responce
 		buf := make([]byte, 2048)
 		n, err := conn.Read(buf)
 		if err != nil {
@@ -125,10 +134,80 @@ func main() {
 
 }
 
-func GetJsonCreate() []byte {
+func HandleSelected(ID float64, conn net.Conn) {
+	// this is where the fun begins
+	for {
+		var inp string
+		var msg []byte
+		var a Action
+		fmt.Printf("Selected id:%f: Please select action (delete/update/read/exit): ")
+		switch inp {
+		case "delete":
+			a.Action = "delete"
+			a.Data = TID{ID}
+			job := SelectJob()
+			a.Object = job
+		case "update":
+			a.Action = "update"
+			job := SelectJob()
+			switch job {
+			case "Teacher":
+				a = CreateTeacher()
+				var tu TeacherU
+				tu.Person = a.Data.(Teacher).Person
+				tu.Classroom = a.Data.(Teacher).Classroom
+				tu.Salary = a.Data.(Teacher).Salary
+				tu.Subject = a.Data.(Teacher).Subject
+				tu.ID = ID
+				a.Data = tu
+			case "Student":
+				a = CreateStudent()
+				var tu StudentU
+				tu.Person = a.Data.(Student).Person
+				tu.Index = a.Data.(Student).Index
+				tu.Year = a.Data.(Student).Year
+				tu.ID = ID
+				a.Data = tu
+			case "Staff":
+				a = CreateStaff()
+				var tu StaffU
+				tu.Person = a.Data.(Staff).Person
+				tu.Classroom = a.Data.(Staff).Classroom
+				tu.Salary = a.Data.(Staff).Salary
+				tu.ID = ID
+				a.Data = tu
+			}
+			a.Action = "update"
+		case "read":
+			a.Action = "read"
+			job := SelectJob()
+			a.Object = job
+			a.Data = TID{ID}
+		case "exit":
+			return
+		default:
+			continue
+		}
+		msg, _ = json.Marshal(a)
+
+		// Send msg
+		conn.Write(msg)
+
+		// Recieve resp
+		buf := make([]byte, 2048)
+		n, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Printf("Response: %s\n", string(buf[:n]))
+	}
+	fmt.Println("Deselected")
+}
+
+func SelectJob() string {
 	var inp string
 	var a byte
-	var msg []byte
 	for a == 0 { // for will run 1 time, unless default case is trigered
 		a++
 		fmt.Print("Please select job (Teacher/Student/Staff): ")
@@ -136,20 +215,33 @@ func GetJsonCreate() []byte {
 		inp = strings.ToLower(inp)
 		switch inp {
 		case "teacher":
-			msg, _ = json.Marshal(CreateTeacher())
+			return "Teacher"
 		case "student":
-			msg, _ = json.Marshal(CreateStudent())
+			return "Student"
 		case "staff":
-			msg, _ = json.Marshal(CreateStaff())
+			return "Staff"
 		default:
 			continue
 		}
+	}
+	return inp
+}
+
+func GetJsonCreate() []byte {
+	var msg []byte
+	job := SelectJob()
+	switch job {
+	case "Teacher":
+		msg, _ = json.Marshal(CreateTeacher())
+	case "Student":
+		msg, _ = json.Marshal(CreateStudent())
+	case "Staff":
+		msg, _ = json.Marshal(CreateStaff())
 	}
 	return msg
 }
 
 func CreateTeacher() Action {
-	fmt.Println("Creating teacher")
 	fmt.Println("There are no undos for this action!")
 	var t Teacher
 	fmt.Print("Please enter teacher's name, surname and personal code: ")
@@ -164,7 +256,7 @@ func CreateTeacher() Action {
 	var a []string
 	var inp string
 	for {
-		fmt.Print("Please enter one or more classroom, \"exit\" to stop")
+		fmt.Print("Please enter one or more classrooms, \"exit\" to stop: ")
 		fmt.Scan(&inp)
 		if inp == "exit" {
 			break
@@ -181,7 +273,6 @@ func CreateTeacher() Action {
 }
 
 func CreateStaff() Action {
-	fmt.Println("Creating staff")
 	fmt.Println("There are no undos for this action!")
 	var t Staff
 	fmt.Print("Please enter staff member's name, surname and personal code: ")
@@ -194,7 +285,7 @@ func CreateStaff() Action {
 	var a []string
 	var inp string
 	for {
-		fmt.Print("Please enter one or more classroom, \"exit\" to stop")
+		fmt.Print("Please enter one or more classrooms, \"exit\" to stop: ")
 		fmt.Scan(&inp)
 		if inp == "exit" {
 			break
@@ -211,7 +302,6 @@ func CreateStaff() Action {
 }
 
 func CreateStudent() Action {
-	fmt.Println("Creating student")
 	fmt.Println("There are no undos for this action!")
 	var t Student
 	fmt.Print("Please enter student's name, surname and personal code: ")
