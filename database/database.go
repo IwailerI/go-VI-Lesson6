@@ -545,15 +545,15 @@ func HandleConn(conn net.Conn) {
 			conn.Close()
 		}
 
+		if string(buf[:n]) == "stop" {
+			break
+		}
+
 		// Decode json request
 		var act Action
 		err = json.Unmarshal(buf[:n], &act)
 		if err != nil {
 			panic(err)
-		}
-
-		if act.Action == "stop" {
-			break
 		}
 
 		var obj GeneralObject
