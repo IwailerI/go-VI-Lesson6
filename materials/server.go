@@ -5,6 +5,7 @@ import (
 	"net"
 )
 
+// Data ...
 type Data struct {
 	N  string
 	Ch chan int //mutex
