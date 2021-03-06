@@ -107,7 +107,7 @@ func (t Staff) Unlock() {
 // DefinedAction is one of 4 action: CRUD
 type DefinedAction interface {
 	GetFromJSON([]byte)
-	Process()
+	Process() []byte
 }
 
 // GetCreate a
@@ -327,150 +327,171 @@ func (action *DeleteStaff) GetFromJSON(rawData []byte) {
 }
 
 // Process a
-func (action *CreateTeacher) Process() {
+func (action *CreateTeacher) Process() []byte {
 	IDCOUNTER++
 	fmt.Printf("Creating teacher, id:%.0f\n", IDCOUNTER)
 	action.T.ID = IDCOUNTER
+	resp := fmt.Sprint(IDCOUNTER)
 	action.T.Person.Ch = make(chan bool, 1)
 	action.T.Unlock()
 	DATABASE = append(DATABASE, action.T)
+	return []byte(resp)
 }
 
 // Process a
-func (action *ReadTeacher) Process() {
+func (action *ReadTeacher) Process() []byte {
 	fmt.Printf("Reading teacher, id:%0.f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			fmt.Println(n)
-			return
+			resp, _ := json.Marshal(n)
+			return resp
 		}
 	}
 	fmt.Println("Teacher not found")
+	return []byte("Teacher not found")
 }
 
 // Process a
-func (action *UpdateTeacher) Process() {
+func (action *UpdateTeacher) Process() []byte {
 	fmt.Printf("Updating teacher, id:%0.f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
 			DATABASE[i] = action.T
 			DATABASE[i].Unlock()
-			return
+			return []byte("Succes")
 		}
 	}
 	fmt.Println("Teacher not found")
+	return []byte("Teacher not found")
 }
 
 // Process a
-func (action *DeleteTeacher) Process() {
+func (action *DeleteTeacher) Process() []byte {
 	fmt.Printf("Deleting teacher, id:%0.f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
 			DATABASE[i], DATABASE[len(DATABASE)-1] = DATABASE[len(DATABASE)-1], DATABASE[i]
 			DATABASE = DATABASE[:len(DATABASE)-1]
-			return
+			return []byte("Succes")
 		}
 	}
+	fmt.Println("Teacher not found")
+	return []byte("Teacher not found")
 }
 
 // Process a
-func (action *CreateStudent) Process() {
+func (action *CreateStudent) Process() []byte {
 	IDCOUNTER++
 	fmt.Printf("Creating student, id:%.0f\n", IDCOUNTER)
 	action.T.ID = IDCOUNTER
+	resp := fmt.Sprint(IDCOUNTER)
 	action.T.Person.Ch = make(chan bool, 1)
 	action.T.Unlock()
 	DATABASE = append(DATABASE, action.T)
+	return []byte(resp)
 }
 
 // Process a
-func (action *ReadStudent) Process() {
+func (action *ReadStudent) Process() []byte {
 	fmt.Printf("Reading student, id:%0.f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			fmt.Println(n)
-			return
+			resp, _ := json.Marshal(n)
+			return resp
 		}
 	}
 	fmt.Println("Student not found")
+	return []byte("Student not found")
 }
 
 // Process a
-func (action *UpdateStudent) Process() {
+func (action *UpdateStudent) Process() []byte {
 	fmt.Printf("Updating student, id:%0.f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
 			DATABASE[i] = action.T
 			DATABASE[i].Unlock()
-			return
+			return []byte("Succes")
 		}
 	}
 	fmt.Println("Student not found")
+	return []byte("Student not found")
 }
 
 // Process a
-func (action *DeleteStudent) Process() {
+func (action *DeleteStudent) Process() []byte {
 	fmt.Printf("Deleting student, id:%0.f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
 			DATABASE[i], DATABASE[len(DATABASE)-1] = DATABASE[len(DATABASE)-1], DATABASE[i]
 			DATABASE = DATABASE[:len(DATABASE)-1]
-			return
+			return []byte("Succes")
 		}
 	}
+	fmt.Println("Student not found")
+	return []byte("Student not found")
 }
 
 // Process a
-func (action *CreateStaff) Process() {
+func (action *CreateStaff) Process() []byte {
 	IDCOUNTER++
 	fmt.Printf("Creating staff, id:%.0f\n", IDCOUNTER)
 	action.T.ID = IDCOUNTER
+	resp := fmt.Sprint(IDCOUNTER)
 	action.T.Person.Ch = make(chan bool, 1)
 	action.T.Unlock()
 	DATABASE = append(DATABASE, action.T)
+	return []byte(resp)
 }
 
 // Process a
-func (action *ReadStaff) Process() {
+func (action *ReadStaff) Process() []byte {
 	fmt.Printf("Reading staff, id:%0.f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			fmt.Println(n)
-			return
+			resp, _ := json.Marshal(n)
+			return resp
 		}
 	}
 	fmt.Println("Staff not found")
+	return []byte("Staff not found")
 }
 
 // Process a
-func (action *UpdateStaff) Process() {
+func (action *UpdateStaff) Process() []byte {
 	fmt.Printf("Updating staff, id:%0.f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
 			DATABASE[i] = action.T
 			DATABASE[i].Unlock()
-			return
+			return []byte("Succes")
 		}
 	}
 	fmt.Println("Staff not found")
+	return []byte("Staff not found")
 }
 
 // Process a
-func (action *DeleteStaff) Process() {
+func (action *DeleteStaff) Process() []byte {
 	fmt.Printf("Deleting staff, id:%0.f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
 			DATABASE[i], DATABASE[len(DATABASE)-1] = DATABASE[len(DATABASE)-1], DATABASE[i]
 			DATABASE = DATABASE[:len(DATABASE)-1]
-			return
+			return []byte("Succes")
 		}
 	}
+	fmt.Println("Staff not founf")
+	return []byte("Staff not founf")
 }
 
 // GeneralObject a
@@ -517,43 +538,50 @@ func main() {
 // HandleConn ...
 func HandleConn(conn net.Conn) {
 	buf := make([]byte, 2048)
-	n, err := conn.Read(buf)
-	if err != nil {
-		fmt.Println(err)
-		conn.Close()
+	for {
+		n, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println(err)
+			conn.Close()
+		}
+
+		// Decode json request
+		var act Action
+		err = json.Unmarshal(buf[:n], &act)
+		if err != nil {
+			panic(err)
+		}
+
+		if act.Action == "stop" {
+			break
+		}
+
+		var obj GeneralObject
+		switch act.ObjName {
+		case "Teacher":
+			obj = &Teacher{}
+		case "Student":
+			obj = &Student{}
+		case "Staff":
+			obj = &Staff{}
+		}
+
+		var task DefinedAction
+		switch act.Action {
+		case "create":
+			task = obj.GetCreate()
+		case "read":
+			task = obj.GetRead()
+		case "update":
+			task = obj.GetUpdate()
+		case "delete":
+			task = obj.GetDelete()
+		}
+
+		// Execute json request
+		task.GetFromJSON(buf[:n])
+		resp := task.Process()
+		conn.Write(resp)
 	}
-
-	// Decode json request
-	var act Action
-	err = json.Unmarshal(buf[:n], &act)
-	if err != nil {
-		panic(err)
-	}
-
-	var obj GeneralObject
-	switch act.ObjName {
-	case "Teacher":
-		obj = &Teacher{}
-	case "Student":
-		obj = &Student{}
-	case "Staff":
-		obj = &Staff{}
-	}
-
-	var task DefinedAction
-	switch act.Action {
-	case "create":
-		task = obj.GetCreate()
-	case "read":
-		task = obj.GetRead()
-	case "update":
-		task = obj.GetUpdate()
-	case "delete":
-		task = obj.GetDelete()
-	}
-
-	// Execute json request
-	task.GetFromJSON(buf[:n])
-	task.Process()
-
+	conn.Close()
 }
