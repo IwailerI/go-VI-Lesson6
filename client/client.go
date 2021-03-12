@@ -9,7 +9,7 @@ import (
 )
 
 type TID struct {
-	id float64 `json:"ID"`
+	id float64 `json:"id"`
 }
 
 // Teacher contains all information about teacher
@@ -85,7 +85,7 @@ type StaffU struct {
 
 // Action represents json request
 type Action struct {
-	Action string      `json:"actoin"`
+	Action string      `json:"action"`
 	Object string      `json:"object"`
 	Data   interface{} `json:"data"`
 }
@@ -140,7 +140,8 @@ func HandleSelected(ID float64, conn net.Conn) {
 		var inp string
 		var msg []byte
 		var a Action
-		fmt.Printf("Selected id:%f: Please select action (delete/update/read/exit): ")
+		fmt.Printf("Selected id:%.0f: Please select action (delete/update/read/exit): ", ID)
+		fmt.Scan(&inp)
 		switch inp {
 		case "delete":
 			a.Action = "delete"
@@ -189,6 +190,8 @@ func HandleSelected(ID float64, conn net.Conn) {
 			continue
 		}
 		msg, _ = json.Marshal(a)
+		fmt.Println(string(msg))
+		fmt.Println(TID{ID})
 
 		// Send msg
 		conn.Write(msg)
