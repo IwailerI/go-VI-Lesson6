@@ -99,6 +99,7 @@ func main() {
 	// defer conn.Close() // no need for this
 
 	// Create json request
+top:
 	for {
 		var inp string
 		var msg []byte
@@ -119,7 +120,7 @@ func main() {
 			conn.Close()
 			os.Exit(0)
 		default:
-			continue
+			continue top
 		}
 		// Send msg
 		conn.Write(msg)
@@ -138,6 +139,25 @@ func main() {
 
 func HandleSelected(ID float64, conn net.Conn) {
 	// this is where the fun begins
+
+	// TODO: client automaticaly ask for job of id ID
+
+	var job string
+
+	conn.Write([]byte(fmt.Sprintf("{\"action\":\"%.0f\",\"object\":\"Unknown\"}", ID)))
+	buf := make([]byte, 256)
+	n, err := conn.Read(buf)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if string(buf[:n]) == "ID not found" {
+		fmt.Println("Invalid ID")
+		return
+	}
+	job = string(buf[:n])
+	var end bool
+
 	for {
 		var inp string
 		var msg []byte
@@ -148,11 +168,12 @@ func HandleSelected(ID float64, conn net.Conn) {
 		case "delete":
 			a.Action = "delete"
 			a.Data = TID{ID}
-			job := SelectJob()
+			// job := SelectJob()
 			a.Object = job
+			end = true
 		case "update":
 			a.Action = "update"
-			job := SelectJob()
+			// job := SelectJob()
 			switch job {
 			case "Teacher":
 				a = CreateTeacher()
@@ -183,7 +204,7 @@ func HandleSelected(ID float64, conn net.Conn) {
 			a.Action = "update"
 		case "read":
 			a.Action = "read"
-			job := SelectJob()
+			// job := SelectJob()
 			a.Object = job
 			a.Data = TID{ID}
 		case "exit":
@@ -198,7 +219,6 @@ func HandleSelected(ID float64, conn net.Conn) {
 
 		// Send msg
 		conn.Write(msg)
-		fmt.Println("sent")
 
 		// Recieve resp
 		buf := make([]byte, 2048)
@@ -207,9 +227,12 @@ func HandleSelected(ID float64, conn net.Conn) {
 			fmt.Println(err)
 			continue
 		}
-		fmt.Println("recieved")
 		fmt.Printf("Response: %s\n", string(buf[:n]))
+		if end {
+			break
+		}
 	}
+	fmt.Println("Deselected")
 }
 
 func SelectJob() string {

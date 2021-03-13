@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strconv"
 )
 
 // Person contains Teacher/Student/Staff
@@ -11,6 +12,7 @@ type Person interface {
 	GetID() float64
 	Lock()
 	Unlock()
+	GetJob() string
 }
 
 // Action describes request
@@ -48,6 +50,11 @@ func (t Teacher) Unlock() {
 	t.Person.ch <- true
 }
 
+// GetJob returns "Teacher"
+func (t Teacher) GetJob() string {
+	return "Teacher"
+}
+
 // Student contains all information about student
 type Student struct {
 	ID     float64 `json:"id"`
@@ -76,6 +83,11 @@ func (t Student) Unlock() {
 	t.Person.ch <- true
 }
 
+// GetJob returns "Student"
+func (t Student) GetJob() string {
+	return "Student"
+}
+
 // Staff contains all information about staff
 type Staff struct {
 	ID        float64  `json:"id"`
@@ -102,6 +114,11 @@ func (t Staff) Lock() {
 // Unlock is makeshift mutex
 func (t Staff) Unlock() {
 	t.Person.ch <- true
+}
+
+// GetJob returns "Staff"
+func (t Staff) GetJob() string {
+	return "Staff"
 }
 
 // DefinedAction is one of 4 action: CRUD
@@ -496,8 +513,8 @@ func (action *DeleteStaff) Process() []byte {
 			return []byte("Succes")
 		}
 	}
-	fmt.Println("Staff not founf")
-	return []byte("Staff not founf")
+	fmt.Println("Staff not found")
+	return []byte("Staff not found")
 }
 
 // GeneralObject a
@@ -506,6 +523,17 @@ type GeneralObject interface {
 	GetRead() DefinedAction
 	GetUpdate() DefinedAction
 	GetDelete() DefinedAction
+}
+
+func getJob(ID float64) []byte {
+	fmt.Printf("Searching for job of %.0f\n", ID)
+	for _, n := range DATABASE {
+		if n.GetID() == ID {
+			return []byte(n.GetJob())
+		}
+	}
+	fmt.Println("ID not found")
+	return []byte("ID not found")
 }
 
 // DATABASE is main data sotrage here
@@ -551,6 +579,7 @@ func main() {
 
 // HandleConn ...
 func HandleConn(conn net.Conn) {
+	// TODO: client can ask for job of ID
 	buf := make([]byte, 2048)
 	for {
 		n, err := conn.Read(buf)
@@ -578,8 +607,11 @@ func HandleConn(conn net.Conn) {
 			obj = &Student{}
 		case "Staff":
 			obj = &Staff{}
+		case "Unknown":
+			// That means that act.Actions contains ID
 		}
 
+		var resp []byte
 		var task DefinedAction
 		switch act.Action {
 		case "create":
@@ -590,14 +622,23 @@ func HandleConn(conn net.Conn) {
 			task = obj.GetUpdate()
 		case "delete":
 			task = obj.GetDelete()
+		default: // act.Action contains id
+			var id float64
+			id, _ = strconv.ParseFloat(act.Action, 64)
+			resp = getJob(id)
 		}
 
-		// Execute json request
-		task.GetFromJSON(buf[:n])
-		resp := task.Process()
+		if len(resp) == 0 {
+			// Execute json request
+			task.GetFromJSON(buf[:n])
+			resp = task.Process()
+		}
 
 		// Respond
 		if len(resp) == 0 {
+			// failsave
+			// if resp was nil, client on the other side would be waiting for eterniry
+			// because of this he will recieve "null"
 			resp = []byte("null")
 		}
 		fmt.Printf("Responce: %s\n", string(resp))
