@@ -606,8 +606,6 @@ func HandleConn(conn net.Conn) {
 	conn.Close()
 }
 
-// todo: gloabal mutex
-
 func lock() {
 	<-mutex
 }
