@@ -360,7 +360,6 @@ func (action *ReadTeacher) Process() []byte {
 	fmt.Printf("Reading teacher, id:%.0f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
-			fmt.Println(n)
 			resp, _ := json.Marshal(n)
 			return resp
 		}
@@ -419,7 +418,6 @@ func (action *ReadStudent) Process() []byte {
 	fmt.Printf("Reading student, id:%.0f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
-			fmt.Println(n)
 			resp, _ := json.Marshal(n)
 			return resp
 		}
@@ -478,7 +476,6 @@ func (action *ReadStaff) Process() []byte {
 	fmt.Printf("Reading staff, id:%.0f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
-			fmt.Println(n)
 			resp, _ := json.Marshal(n)
 			return resp
 		}
