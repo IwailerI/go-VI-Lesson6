@@ -1,3 +1,6 @@
+// Backup of old database script, without TCP metworking
+// gets requests from "data2.dat", which is file with each line containing jison requst, not comma seperated or anything, just 1 request per line.
+
 package main
 
 import (

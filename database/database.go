@@ -343,6 +343,9 @@ func (action *DeleteStaff) GetFromJSON(rawData []byte) {
 	}
 }
 
+// In these methods all the magic hapens, my sanity won't let me comment everytinf in there
+// they are pretty easy to understand, a lot of copypasta
+
 // Process a
 func (action *CreateTeacher) Process() []byte {
 	IDCOUNTER++
@@ -542,10 +545,11 @@ var DATABASE []Person
 // IDCOUNTER stores current id, increment each time object is created
 var IDCOUNTER float64
 
+// global mutex is used when deleting elemnts from database, so noonone can acces it while elemnts are shifting
 var mutex chan bool
 
 func init() {
-	mutex = make(chan bool, 1)
+	mutex = make(chan bool, 1) // asigning mutex
 }
 
 func main() {
@@ -556,38 +560,46 @@ func main() {
 	// }
 	// defer fin.Close()
 
-	// Setup conn
+	// Establish connetion
 	l, err := net.Listen("tcp", "127.0.0.1:15395")
 	if err != nil {
 		panic(err)
 	}
 	defer l.Close()
 
-	unlock() // Unlock mutex
+	// say: we are ready to accept requests
+	unlock()
 
 	// Handle pre-connection
 	for {
 		conn, err := l.Accept()
 		if err != nil {
+			// if conn is faulty, ignore it
 			fmt.Println(err)
 			continue
 		}
+		// if everything is alright, concurently handle ut
+		// basically asign new "buddy" to work with our client
 		go HandleConn(conn)
 	}
 
 }
 
-// HandleConn ...
+// HandleConn is self explanatory
 func HandleConn(conn net.Conn) {
-	// TODO: client can ask for job of ID
 	buf := make([]byte, 2048)
+	// client can send multiple request, so we have an infinite loop
 	for {
+		// recieve msg
 		n, err := conn.Read(buf)
 		if err != nil {
+			// if something is wrong, bail out
 			fmt.Println(err)
 			conn.Close()
+			return
 		}
 
+		// if client said that he is done, stop interacting with him
 		if string(buf[:n]) == "stop" {
 			break
 		}
@@ -596,9 +608,12 @@ func HandleConn(conn net.Conn) {
 		var act Action
 		err = json.Unmarshal(buf[:n], &act)
 		if err != nil {
-			panic(err)
+			// if request is invalid, allert client and wait continue
+			conn.Write([]byte("Invalid request"))
+			continue
 		}
 
+		// Get job label or object that we will be working with
 		var obj GeneralObject
 		switch act.ObjName {
 		case "Teacher":
@@ -611,8 +626,10 @@ func HandleConn(conn net.Conn) {
 			// That means that act.Actions contains ID
 		}
 
-		var resp []byte
-		var task DefinedAction
+		var resp []byte        // we will send back to client
+		var task DefinedAction //task we will be executing
+
+		// deciding wich action we will nedd to execute
 		switch act.Action {
 		case "create":
 			task = obj.GetCreate()
@@ -623,34 +640,47 @@ func HandleConn(conn net.Conn) {
 		case "delete":
 			task = obj.GetDelete()
 		default: // act.Action contains id
+			// client wants to know job of certain id
 			var id float64
+
+			// parsing id, that client sent
 			id, _ = strconv.ParseFloat(act.Action, 64)
+
+			// filling resp
 			resp = getJob(id)
 		}
 
 		if len(resp) == 0 {
-			// Execute json request
+			// Execute json request, if we didn't fill resp yet
+
+			// decode json request
 			task.GetFromJSON(buf[:n])
+
+			// execute request
 			resp = task.Process()
 		}
 
-		// Respond
 		if len(resp) == 0 {
 			// failsave
 			// if resp was nil, client on the other side would be waiting for eterniry
 			// because of this he will recieve "null"
 			resp = []byte("null")
 		}
+
+		// Respond
 		fmt.Printf("Responce: %s\n", string(resp))
 		conn.Write(resp)
 	}
+	// after we done with our client, close conn
 	conn.Close()
 }
 
+// global mutex lock
 func lock() {
 	<-mutex
 }
 
+// global mutex unlock
 func unlock() {
 	mutex <- true
 }
