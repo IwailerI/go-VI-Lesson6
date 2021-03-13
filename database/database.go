@@ -29,7 +29,7 @@ type Teacher struct {
 		Name         string `json:"name"`
 		Surname      string `json:"surname"`
 		PersonalCode string `json:"personalCode"`
-		Ch           chan bool
+		ch           chan bool
 	} `json:"person"`
 }
 
@@ -40,12 +40,12 @@ func (t Teacher) GetID() float64 {
 
 // Lock is makeshift mutex
 func (t Teacher) Lock() {
-	<-t.Person.Ch
+	<-t.Person.ch
 }
 
 // Unlock is makeshift mutex
 func (t Teacher) Unlock() {
-	t.Person.Ch <- true
+	t.Person.ch <- true
 }
 
 // Student contains all information about student
@@ -57,7 +57,7 @@ type Student struct {
 		Name         string `json:"name"`
 		Surname      string `json:"surname"`
 		PersonalCode string `json:"personalCode"`
-		Ch           chan bool
+		ch           chan bool
 	} `json:"person"`
 }
 
@@ -68,12 +68,12 @@ func (t Student) GetID() float64 {
 
 // Lock is makeshift mutex
 func (t Student) Lock() {
-	<-t.Person.Ch
+	<-t.Person.ch
 }
 
 // Unlock is makeshift mutex
 func (t Student) Unlock() {
-	t.Person.Ch <- true
+	t.Person.ch <- true
 }
 
 // Staff contains all information about staff
@@ -85,7 +85,7 @@ type Staff struct {
 		Name         string `json:"name"`
 		Surname      string `json:"surname"`
 		PersonalCode string `json:"personalCode"`
-		Ch           chan bool
+		ch           chan bool
 	} `json:"person"`
 }
 
@@ -96,12 +96,12 @@ func (t Staff) GetID() float64 {
 
 // Lock is makeshift mutex
 func (t Staff) Lock() {
-	<-t.Person.Ch
+	<-t.Person.ch
 }
 
 // Unlock is makeshift mutex
 func (t Staff) Unlock() {
-	t.Person.Ch <- true
+	t.Person.ch <- true
 }
 
 // DefinedAction is one of 4 action: CRUD
@@ -332,7 +332,7 @@ func (action *CreateTeacher) Process() []byte {
 	fmt.Printf("Creating teacher, id:%.0f\n", IDCOUNTER)
 	action.T.ID = IDCOUNTER
 	resp := fmt.Sprint(IDCOUNTER)
-	action.T.Person.Ch = make(chan bool, 1)
+	action.T.Person.ch = make(chan bool, 1)
 	action.T.Unlock()
 	DATABASE = append(DATABASE, action.T)
 	return []byte(resp)
@@ -340,7 +340,7 @@ func (action *CreateTeacher) Process() []byte {
 
 // Process a
 func (action *ReadTeacher) Process() []byte {
-	fmt.Printf("Reading teacher, id:%0.f\n", action.T.ID)
+	fmt.Printf("Reading teacher, id:%.0f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			fmt.Println(n)
@@ -354,7 +354,7 @@ func (action *ReadTeacher) Process() []byte {
 
 // Process a
 func (action *UpdateTeacher) Process() []byte {
-	fmt.Printf("Updating teacher, id:%0.f\n", action.T.ID)
+	fmt.Printf("Updating teacher, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
@@ -369,7 +369,7 @@ func (action *UpdateTeacher) Process() []byte {
 
 // Process a
 func (action *DeleteTeacher) Process() []byte {
-	fmt.Printf("Deleting teacher, id:%0.f\n", action.T.ID)
+	fmt.Printf("Deleting teacher, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
@@ -388,7 +388,7 @@ func (action *CreateStudent) Process() []byte {
 	fmt.Printf("Creating student, id:%.0f\n", IDCOUNTER)
 	action.T.ID = IDCOUNTER
 	resp := fmt.Sprint(IDCOUNTER)
-	action.T.Person.Ch = make(chan bool, 1)
+	action.T.Person.ch = make(chan bool, 1)
 	action.T.Unlock()
 	DATABASE = append(DATABASE, action.T)
 	return []byte(resp)
@@ -396,7 +396,7 @@ func (action *CreateStudent) Process() []byte {
 
 // Process a
 func (action *ReadStudent) Process() []byte {
-	fmt.Printf("Reading student, id:%0.f\n", action.T.ID)
+	fmt.Printf("Reading student, id:%.0f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			fmt.Println(n)
@@ -410,7 +410,7 @@ func (action *ReadStudent) Process() []byte {
 
 // Process a
 func (action *UpdateStudent) Process() []byte {
-	fmt.Printf("Updating student, id:%0.f\n", action.T.ID)
+	fmt.Printf("Updating student, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
@@ -425,7 +425,7 @@ func (action *UpdateStudent) Process() []byte {
 
 // Process a
 func (action *DeleteStudent) Process() []byte {
-	fmt.Printf("Deleting student, id:%0.f\n", action.T.ID)
+	fmt.Printf("Deleting student, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
@@ -444,7 +444,7 @@ func (action *CreateStaff) Process() []byte {
 	fmt.Printf("Creating staff, id:%.0f\n", IDCOUNTER)
 	action.T.ID = IDCOUNTER
 	resp := fmt.Sprint(IDCOUNTER)
-	action.T.Person.Ch = make(chan bool, 1)
+	action.T.Person.ch = make(chan bool, 1)
 	action.T.Unlock()
 	DATABASE = append(DATABASE, action.T)
 	return []byte(resp)
@@ -452,7 +452,7 @@ func (action *CreateStaff) Process() []byte {
 
 // Process a
 func (action *ReadStaff) Process() []byte {
-	fmt.Printf("Reading staff, id:%0.f\n", action.T.ID)
+	fmt.Printf("Reading staff, id:%.0f\n", action.T.ID)
 	for _, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			fmt.Println(n)
@@ -466,7 +466,7 @@ func (action *ReadStaff) Process() []byte {
 
 // Process a
 func (action *UpdateStaff) Process() []byte {
-	fmt.Printf("Updating staff, id:%0.f\n", action.T.ID)
+	fmt.Printf("Updating staff, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
@@ -481,7 +481,7 @@ func (action *UpdateStaff) Process() []byte {
 
 // Process a
 func (action *DeleteStaff) Process() []byte {
-	fmt.Printf("Deleting staff, id:%0.f\n", action.T.ID)
+	fmt.Printf("Deleting staff, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
@@ -581,7 +581,15 @@ func HandleConn(conn net.Conn) {
 		// Execute json request
 		task.GetFromJSON(buf[:n])
 		resp := task.Process()
+
+		// Respond
+		if len(resp) == 0 {
+			resp = []byte("null")
+		}
+		fmt.Printf("Responce: %s\n", string(resp))
 		conn.Write(resp)
 	}
 	conn.Close()
 }
+
+// todo: gloabal mutex

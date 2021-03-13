@@ -9,7 +9,7 @@ import (
 )
 
 type TID struct {
-	id float64 `json:"id"`
+	ID float64 `json:"id"`
 }
 
 // Teacher contains all information about teacher
@@ -118,6 +118,8 @@ func main() {
 			fmt.Println("Exiting...")
 			conn.Close()
 			os.Exit(0)
+		default:
+			continue
 		}
 		// Send msg
 		conn.Write(msg)
@@ -185,6 +187,7 @@ func HandleSelected(ID float64, conn net.Conn) {
 			a.Object = job
 			a.Data = TID{ID}
 		case "exit":
+			fmt.Println("Deselected")
 			return
 		default:
 			continue
@@ -195,6 +198,7 @@ func HandleSelected(ID float64, conn net.Conn) {
 
 		// Send msg
 		conn.Write(msg)
+		fmt.Println("sent")
 
 		// Recieve resp
 		buf := make([]byte, 2048)
@@ -203,9 +207,9 @@ func HandleSelected(ID float64, conn net.Conn) {
 			fmt.Println(err)
 			continue
 		}
+		fmt.Println("recieved")
 		fmt.Printf("Response: %s\n", string(buf[:n]))
 	}
-	fmt.Println("Deselected")
 }
 
 func SelectJob() string {
