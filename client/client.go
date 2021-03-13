@@ -111,6 +111,7 @@ top:
 			fmt.Print("ID: ")
 			fmt.Scan(&ID)
 			HandleSelected(ID, conn)
+			fmt.Println()
 			continue
 		case "create":
 			msg = GetJsonCreate()
@@ -214,8 +215,6 @@ func HandleSelected(ID float64, conn net.Conn) {
 			continue
 		}
 		msg, _ = json.Marshal(a)
-		fmt.Println(string(msg))
-		fmt.Println(TID{ID})
 
 		// Send msg
 		conn.Write(msg)
@@ -237,9 +236,7 @@ func HandleSelected(ID float64, conn net.Conn) {
 
 func SelectJob() string {
 	var inp string
-	var a byte
-	for a == 0 { // for will run 1 time, unless default case is trigered
-		a++
+	for {
 		fmt.Print("Please select job (Teacher/Student/Staff): ")
 		fmt.Scan(&inp)
 		inp = strings.ToLower(inp)
@@ -250,11 +247,8 @@ func SelectJob() string {
 			return "Student"
 		case "staff":
 			return "Staff"
-		default:
-			continue
 		}
 	}
-	return inp
 }
 
 func GetJsonCreate() []byte {
