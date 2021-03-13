@@ -375,6 +375,7 @@ func (action *UpdateTeacher) Process() []byte {
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
+			action.T.Person.ch = DATABASE[i].(Teacher).Person.ch // transmit mutex channel to new actoin.t
 			DATABASE[i] = action.T
 			DATABASE[i].Unlock()
 			return []byte("Succes")
@@ -433,6 +434,7 @@ func (action *UpdateStudent) Process() []byte {
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
+			action.T.Person.ch = DATABASE[i].(Student).Person.ch // transmit mutex channel to new action.t
 			DATABASE[i] = action.T
 			DATABASE[i].Unlock()
 			return []byte("Succes")
@@ -491,6 +493,7 @@ func (action *UpdateStaff) Process() []byte {
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
 			DATABASE[i].Lock()
+			action.T.Person.ch = DATABASE[i].(Staff).Person.ch // transmit mutex channel to new action.t
 			DATABASE[i] = action.T
 			DATABASE[i].Unlock()
 			return []byte("Succes")
