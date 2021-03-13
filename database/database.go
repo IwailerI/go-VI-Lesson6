@@ -372,9 +372,11 @@ func (action *DeleteTeacher) Process() []byte {
 	fmt.Printf("Deleting teacher, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
+			lock()
 			DATABASE[i].Lock()
 			DATABASE[i], DATABASE[len(DATABASE)-1] = DATABASE[len(DATABASE)-1], DATABASE[i]
 			DATABASE = DATABASE[:len(DATABASE)-1]
+			unlock()
 			return []byte("Succes")
 		}
 	}
@@ -428,9 +430,11 @@ func (action *DeleteStudent) Process() []byte {
 	fmt.Printf("Deleting student, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
+			lock()
 			DATABASE[i].Lock()
 			DATABASE[i], DATABASE[len(DATABASE)-1] = DATABASE[len(DATABASE)-1], DATABASE[i]
 			DATABASE = DATABASE[:len(DATABASE)-1]
+			unlock()
 			return []byte("Succes")
 		}
 	}
@@ -484,9 +488,11 @@ func (action *DeleteStaff) Process() []byte {
 	fmt.Printf("Deleting staff, id:%.0f\n", action.T.ID)
 	for i, n := range DATABASE {
 		if n.GetID() == action.T.ID {
+			lock()
 			DATABASE[i].Lock()
 			DATABASE[i], DATABASE[len(DATABASE)-1] = DATABASE[len(DATABASE)-1], DATABASE[i]
 			DATABASE = DATABASE[:len(DATABASE)-1]
+			unlock()
 			return []byte("Succes")
 		}
 	}
@@ -508,6 +514,12 @@ var DATABASE []Person
 // IDCOUNTER stores current id, increment each time object is created
 var IDCOUNTER float64
 
+var mutex chan bool
+
+func init() {
+	mutex = make(chan bool, 1)
+}
+
 func main() {
 	// // Open file
 	// fin, err := os.Open("data2.dat")
@@ -522,6 +534,8 @@ func main() {
 		panic(err)
 	}
 	defer l.Close()
+
+	unlock() // Unlock mutex
 
 	// Handle pre-connection
 	for {
@@ -593,3 +607,11 @@ func HandleConn(conn net.Conn) {
 }
 
 // todo: gloabal mutex
+
+func lock() {
+	<-mutex
+}
+
+func unlock() {
+	mutex <- true
+}
