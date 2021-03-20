@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"net"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -97,13 +99,11 @@ type Action struct {
 	Data   interface{} `json:"data"`
 }
 
+const URL = "http://localhost:8080/"
+
 func main() {
-	// Establish connection
-	conn, err := net.Dial("tcp", "127.0.0.1:15395")
-	if err != nil {
-		panic(err)
-	}
-	// defer conn.Close() // no need for this
+
+	client := &http.Client{}
 
 top:
 	for {
@@ -122,7 +122,7 @@ top:
 			fmt.Scan(&ID)
 
 			// this function handles everything
-			HandleSelected(ID, conn)
+			HandleSelected(ID, client)
 
 			// leave an empty line, for easy understanding
 			fmt.Println()
@@ -131,35 +131,38 @@ top:
 			// GetJsonCreate handels everything and returns msg in []byte, ready to be sent
 			msg = GetJsonCreate()
 		case "exit":
-			// transmit to server that client is disconecting
-			conn.Write([]byte("stop"))
 			fmt.Println("Exiting...")
-
-			// close conn and quit
-			conn.Close()
 			os.Exit(0)
 		default: // if command unknown, try again
 			continue top
 		}
-		// Send msg that we got from out commands
-		conn.Write(msg)
-
-		// Recieve responce
-		buf := make([]byte, 2048)
-		n, err := conn.Read(buf)
+		// Send msg that we got from our commands
+		var body bytes.Buffer
+		body.Write(msg)
+		req, err := http.NewRequest("POST", URL, &body)
 		if err != nil {
-			// skip displaying it if we got error
 			fmt.Println(err)
 			continue
 		}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		resp.Body.Close()
 
 		// Print responce
-		fmt.Printf("Response: %s\n", string(buf[:n]))
+		fmt.Printf("Response: %s\n", string(data))
 	}
 
 }
 
-func HandleSelected(ID float64, conn net.Conn) {
+func HandleSelected(ID float64, client *http.Client) {
 	// this is where the fun begins
 
 	var job string // never changes
@@ -167,25 +170,46 @@ func HandleSelected(ID float64, conn net.Conn) {
 	// make request of getting job of selected id
 	// request will lokk something like this:
 	// {"action":3,"object":"Unknown"}
-	conn.Write([]byte(fmt.Sprintf("{\"action\":\"%.0f\",\"object\":\"Unknown\"}", ID)))
+	// conn.Write([]byte(fmt.Sprintf("{\"action\":\"%.0f\",\"object\":\"Unknown\"}", ID)))
 
-	// recieve our job string
-	buf := make([]byte, 256)
-	n, err := conn.Read(buf)
+	var body bytes.Buffer
+	body.Write([]byte(fmt.Sprintf("{\"action\":\"%.0f\",\"object\":\"Unknown\"}", ID)))
+	req, err := http.NewRequest("POST", URL, &body)
 	if err != nil {
-		// exit HandleSelection if we didn't get job label
 		fmt.Println(err)
 		return
 	}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	resp.Body.Close()
+
+	job = string(data)
+
+	// // recieve our job string
+	// buf := make([]byte, 256)
+	// n, err := conn.Read(buf)
+	// if err != nil {
+	// 	// exit HandleSelection if we didn't get job label
+	// 	fmt.Println(err)
+	// 	return
+	// }
 
 	// if we got empty string, alert user and exit
-	if string(buf[:n]) == "ID not found" {
+	if job == "ID not found" {
 		fmt.Println("Invalid ID")
 		return
 	}
 
-	// parse job string
-	job = string(buf[:n])
+	// // parse job string
+	// job = string(buf[:n])
 
 	var end bool // used for exiting
 
@@ -260,19 +284,28 @@ func HandleSelected(ID float64, conn net.Conn) {
 		msg, _ = json.Marshal(a)
 
 		// Send msg
-		conn.Write(msg)
 
-		// Recieve responce
-		buf := make([]byte, 2048)
-		n, err := conn.Read(buf)
+		var body bytes.Buffer
+		body.Write(msg)
+		req, err := http.NewRequest("POST", URL, &body)
 		if err != nil {
-			// if something went wrong, dont output msg and continue
 			fmt.Println(err)
 			continue
 		}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		resp.Body.Close()
 
 		// output responce for the user
-		fmt.Printf("Response: %s\n", string(buf[:n]))
+		fmt.Printf("Response: %s\n", string(data))
 
 		// exit if command was "delete"
 		if end {
