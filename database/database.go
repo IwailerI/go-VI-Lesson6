@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net"
+	"io"
+	"net/http"
 	"strconv"
 )
 
@@ -552,127 +553,112 @@ func init() {
 	mutex = make(chan bool, 1) // asigning mutex
 }
 
-func main() {
-	// // Open file
-	// fin, err := os.Open("data2.dat")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer fin.Close()
+func Handler(w http.ResponseWriter, req *http.Request) {
+	if req.Method == "GET" {
+		c := make(chan string)
+		go GetIDS(c)
 
-	// Establish connetion
-	l, err := net.Listen("tcp", "127.0.0.1:15395")
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-
-	// say: we are ready to accept requests
-	unlock()
-
-	// Handle pre-connection
-	for {
-		conn, err := l.Accept()
+		resp := <-c
+		io.WriteString(w, resp)
+	} else if req.Method == "POST" {
+		data, err := io.ReadAll(req.Body)
+		req.Body.Close()
 		if err != nil {
-			// if conn is faulty, ignore it
-			fmt.Println(err)
-			continue
+			return
 		}
-		// if everything is alright, concurently handle ut
-		// basically asign new "buddy" to work with our client
-		go HandleConn(conn)
+		resp := HandleConn(data)
+		io.WriteString(w, resp)
+	} else {
+		w.WriteHeader(405)
 	}
 
 }
 
-// HandleConn is self explanatory
-func HandleConn(conn net.Conn) {
-	buf := make([]byte, 2048)
-	// client can send multiple request, so we have an infinite loop
-	for {
-		// recieve msg
-		n, err := conn.Read(buf)
-		if err != nil {
-			// if something is wrong, bail out
-			fmt.Println(err)
-			conn.Close()
-			return
-		}
+func main() {
+	http.HandleFunc("/", Handler)
 
-		// if client said that he is done, stop interacting with him
-		if string(buf[:n]) == "stop" {
-			break
-		}
+	err := http.ListenAndServe(":5555", nil)
+	panic(err)
+}
 
-		// Decode json request
-		var act Action
-		err = json.Unmarshal(buf[:n], &act)
-		if err != nil {
-			// if request is invalid, allert client and wait continue
-			conn.Write([]byte("Invalid request"))
-			continue
-		}
-
-		// Get job label or object that we will be working with
-		var obj GeneralObject
-		switch act.ObjName {
-		case "Teacher":
-			obj = &Teacher{}
-		case "Student":
-			obj = &Student{}
-		case "Staff":
-			obj = &Staff{}
-		case "Unknown":
-			// That means that act.Actions contains ID
-		}
-
-		var resp []byte        // we will send back to client
-		var task DefinedAction //task we will be executing
-
-		// deciding wich action we will nedd to execute
-		switch act.Action {
-		case "create":
-			task = obj.GetCreate()
-		case "read":
-			task = obj.GetRead()
-		case "update":
-			task = obj.GetUpdate()
-		case "delete":
-			task = obj.GetDelete()
-		default: // act.Action contains id
-			// client wants to know job of certain id
-			var id float64
-
-			// parsing id, that client sent
-			id, _ = strconv.ParseFloat(act.Action, 64)
-
-			// filling resp
-			resp = getJob(id)
-		}
-
-		if len(resp) == 0 {
-			// Execute json request, if we didn't fill resp yet
-
-			// decode json request
-			task.GetFromJSON(buf[:n])
-
-			// execute request
-			resp = task.Process()
-		}
-
-		if len(resp) == 0 {
-			// failsave
-			// if resp was nil, client on the other side would be waiting for eterniry
-			// because of this he will recieve "null"
-			resp = []byte("null")
-		}
-
-		// Respond
-		fmt.Printf("Responce: %s\n", string(resp))
-		conn.Write(resp)
+func GetIDS(out chan string) {
+	fmt.Println("Getting IDS")
+	var resp string
+	for _, n := range DATABASE {
+		resp += strconv.Itoa(int(n.GetID())) + "\n"
 	}
-	// after we done with our client, close conn
-	conn.Close()
+	fmt.Println(resp)
+	out <- resp
+}
+
+// HandleConn is self explanatory
+func HandleConn(data []byte) string {
+	// Decode json request
+	var act Action
+	err := json.Unmarshal(data, &act)
+	if err != nil {
+		// if request is invalid, allert client and wait continue
+		return "Invalid request"
+	}
+
+	// Get job label or object that we will be working with
+	var obj GeneralObject
+	switch act.ObjName {
+	case "Teacher":
+		obj = &Teacher{}
+	case "Student":
+		obj = &Student{}
+	case "Staff":
+		obj = &Staff{}
+	case "Unknown":
+		// That means that act.Actions contains ID
+	}
+
+	var resp string        // we will send back to client
+	var task DefinedAction //task we will be executing
+
+	// deciding wich action we will nedd to execute
+	switch act.Action {
+	case "create":
+		task = obj.GetCreate()
+	case "read":
+		task = obj.GetRead()
+	case "update":
+		task = obj.GetUpdate()
+	case "delete":
+		task = obj.GetDelete()
+	default: // act.Action contains id
+		// client wants to know job of certain id
+		var id float64
+
+		// parsing id, that client sent
+		id, _ = strconv.ParseFloat(act.Action, 64)
+
+		// filling resp
+		resp = string(getJob(id))
+	}
+
+	if len(resp) == 0 {
+		// Execute json request, if we didn't fill resp yet
+
+		// decode json request
+		task.GetFromJSON(data)
+
+		// execute request
+		resp = string(task.Process())
+	}
+
+	if len(resp) == 0 {
+		// failsave
+		// if resp was nil, client on the other side would be waiting for eterniry
+		// because of this he will recieve "null"
+		resp = "null"
+	}
+
+	// Respond
+	fmt.Printf("Responce: %s\n", string(resp))
+	return resp
+
 }
 
 // global mutex lock
