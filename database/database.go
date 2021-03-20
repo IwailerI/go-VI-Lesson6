@@ -555,10 +555,8 @@ func init() {
 
 func Handler(w http.ResponseWriter, req *http.Request) {
 	if req.Method == "GET" {
-		c := make(chan string)
-		go GetIDS(c)
-
-		resp := <-c
+		fmt.Println("Listing IDs")
+		resp := GetIDS()
 		io.WriteString(w, resp)
 	} else if req.Method == "POST" {
 		data, err := io.ReadAll(req.Body)
@@ -576,19 +574,19 @@ func Handler(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	http.HandleFunc("/", Handler)
-
+	unlock()
 	err := http.ListenAndServe(":5555", nil)
 	panic(err)
 }
 
-func GetIDS(out chan string) {
+func GetIDS() string {
 	fmt.Println("Getting IDS")
 	var resp string
+	resp = "\n"
 	for _, n := range DATABASE {
 		resp += strconv.Itoa(int(n.GetID())) + "\n"
 	}
-	fmt.Println(resp)
-	out <- resp
+	return resp
 }
 
 // HandleConn is self explanatory

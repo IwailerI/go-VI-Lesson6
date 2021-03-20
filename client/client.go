@@ -99,7 +99,7 @@ type Action struct {
 	Data   interface{} `json:"data"`
 }
 
-const URL = "http://localhost:8080/"
+const URL = "http://localhost:5555/"
 
 func main() {
 
@@ -110,9 +110,9 @@ top:
 		// get command
 		var inp string
 		var msg []byte
-		fmt.Print("Please select action (select/create/exit): ")
+		fmt.Print("Please select action (select/create/list/exit): ")
 		fmt.Scan(&inp)
-
+		method := "POST"
 		// parse input
 		switch inp {
 		case "select":
@@ -133,13 +133,16 @@ top:
 		case "exit":
 			fmt.Println("Exiting...")
 			os.Exit(0)
+		case "list":
+			method = "GET"
+			msg = []byte{}
 		default: // if command unknown, try again
 			continue top
 		}
 		// Send msg that we got from our commands
 		var body bytes.Buffer
 		body.Write(msg)
-		req, err := http.NewRequest("POST", URL, &body)
+		req, err := http.NewRequest(method, URL, &body)
 		if err != nil {
 			fmt.Println(err)
 			continue
