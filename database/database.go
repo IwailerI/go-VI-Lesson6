@@ -581,6 +581,9 @@ func main() {
 
 func GetIDS() string {
 	fmt.Println("Getting IDS")
+	if len(DATABASE) == 0 {
+		return "None"
+	}
 	var resp string
 	resp = "\n"
 	for _, n := range DATABASE {
