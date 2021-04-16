@@ -554,6 +554,9 @@ func init() {
 }
 
 func Handler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length")
 	if req.Method == "GET" {
 		fmt.Println("Listing IDs")
 		resp := GetIDS()
@@ -566,6 +569,8 @@ func Handler(w http.ResponseWriter, req *http.Request) {
 		}
 		resp := HandleConn(data)
 		io.WriteString(w, resp)
+	} else if req.Method == "OPTIONS" {
+		w.WriteHeader(204)
 	} else {
 		w.WriteHeader(405)
 	}
